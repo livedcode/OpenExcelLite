@@ -1,0 +1,47 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+
+		<!-- NuGet Packaging -->
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<PackageId>OpenExcelLite</PackageId>
+		<Version>1.0.0</Version>
+		<Authors>livedcode</Authors>
+		<Company>livedcode</Company>
+		<Product>OpenExcelLite</Product>
+		<PackageDescription>
+			A lightweight Excel (XLSX) builder using the official OpenXML SDK, supporting
+			streaming, tables, header enforcement, autofit, and schema-compliant output.
+			No ClosedXML or EPPlus dependencies. Extremely fast and memory efficient.
+		</PackageDescription>
+		<Description>
+			OpenExcelLite: a minimal, schema-safe OpenXML Excel generator with support
+			for streaming large datasets (100k–1M rows), auto header validation,
+			table creation, autofit columns, and strict ECMA-376 output.
+			Designed for high-performance exports using .NET 8.
+		</Description>
+		<PackageTags>openxml excel xlsx streaming table builder export fast lightweight</PackageTags>
+		<PackageProjectUrl>https://github.com/livedcode/OpenExcelLite</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/livedcode/OpenExcelLite</RepositoryUrl>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<RepositoryType>git</RepositoryType>
+
+		<!-- Include README.md automatically -->
+		<IncludeContentInPack>true</IncludeContentInPack>
+
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="DocumentFormat.OpenXml" Version="3.3.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- Include README.md in NuGet package -->
+		<None Include="README.md" Pack="true" PackagePath="" />
+		<None Include="LICENSE" Pack="true" PackagePath="" />
+	</ItemGroup>
+</Project>
