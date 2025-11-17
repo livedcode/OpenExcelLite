@@ -8,7 +8,7 @@
 		<!-- NuGet Packaging -->
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageId>OpenExcelLite</PackageId>
-		<Version>1.0.0</Version>
+		<Version>1.1.0</Version>
 		<Authors>livedcode</Authors>
 		<Company>livedcode</Company>
 		<Product>OpenExcelLite</Product>
@@ -29,7 +29,14 @@
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<RepositoryType>git</RepositoryType>
-
+		<PackageReleaseNotes>
+			v1.1.0:
+			- Added AddEmptyRows(int)
+			- Added WriteEmptyRows(int)
+			- Improved header detection
+			- Fixed table and AutoFilter ranges
+			- Removed Excel repair warnings
+		</PackageReleaseNotes>
 		<!-- Include README.md automatically -->
 		<IncludeContentInPack>true</IncludeContentInPack>
 
@@ -42,6 +49,7 @@
 	<ItemGroup>
 		<!-- Include README.md in NuGet package -->
 		<None Include="README.md" Pack="true" PackagePath="" />
+		<None Include="CHANGELOG.md" Pack="true" PackagePath="" />
 		<None Include="LICENSE" Pack="true" PackagePath="" />
 	</ItemGroup>
 </Project>

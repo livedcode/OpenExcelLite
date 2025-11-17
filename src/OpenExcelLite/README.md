@@ -1,197 +1,82 @@
-
 # OpenExcelLite
 
-**OpenExcelLite** is a lightweight, dependency-free Excel (XLSX) generation library built on the official **Open XML SDK**.  
-It focuses on **speed**, **schema correctness**, **streaming large datasets**, and **clean, easy-to-use APIs** — without the heavy overhead of ClosedXML, EPPlus, or NPOI.
+A lightweight, schema-safe Excel (XLSX) generator for .NET using the official OpenXML SDK.  
+Supports both in-memory and streaming Excel creation — designed for fast, dependency-free exports.
 
 ---
 
-# ✨ Features
+## ✨ Features
 
-### ✔ In-Memory Excel Builder  
-- Create worksheets easily  
-- Auto-enforced header row (non-empty, unique, sanitized)  
-- Table support with valid `table1.xml`  
-- Auto-fit column widths  
-- Date handling using numeric OADate values  
-- Clean, minimal styles.xml  
-- 100% OpenXmlValidator-compatible  
-
-### ✔ Streaming Excel Builder (100k → 1,000,000+ rows)
-- Very low memory usage (O(1))  
-- Uses `OpenXmlWriter` for forward-only streaming  
-- Perfect for exporting logs, audit trails, BI datasets  
-
-### ✔ Table Support  
-- Unique table IDs  
-- Unique + sanitized table names  
-- Column names synchronized with header row  
-- Correct TableParts count handling  
-- No “Repaired Records” warning in Excel  
-
-### ✔ Lightweight  
-- Only **DocumentFormat.OpenXml** dependency  
-- No ClosedXML, no EPPlus, no interop, no COM  
-- Fully .NET 8 / .NET Standard compatible  
+- In-memory Excel builder  
+- Streaming XLSX writer for large datasets (100k–1M rows)  
+- Table creation with styling  
+- AutoFilter support  
+- AutoFit column widths (approx algorithm)  
+- Date formatting (OADate + style index)  
+- Automatic header validation and deduplication  
+- Boolean, numeric, string inference  
+- **NEW in v1.1.0**: Blank row support (in-memory + streaming)
 
 ---
 
-# 🚫 Limitations
+## 🚀 New in v1.1.0 — Blank Row Enhancements
 
-OpenExcelLite is intentionally simple.  
-The following features are **not yet implemented**:
+### ✔ AddEmptyRows() — In-Memory Builder
 
-- Formula calculation engine  
-- Full cell styling (colors, borders, fonts)  
-- Merged cells  
-- Images  
-- Charts  
-- Pivot tables  
-- Hyperlinks  
-- Data validation  
-- Worksheet protection  
-- Pixel-perfect AutoFit  
-- Multi-sheet streaming  
-- Shared strings in streaming mode  
-
----
-
-# 📦 Installation
-
-### NuGet (when published):
-
-```bash
-dotnet add package OpenExcelLite
+```csharp
+s.AddEmptyRows(3);
+s.AddRow("Id", "Name");
+s.AddRow(1, "Alex");
 ```
 
-### Local project reference:
+### ✔ Streaming: WriteEmptyRows()
 
-```xml
-<ItemGroup>
-  <ProjectReference Include="..\OpenExcelLite\OpenExcelLite.csproj" />
-</ItemGroup>
+```csharp
+writer.WriteEmptyRows(5);
+writer.WriteRow("Id", "Name");
 ```
+
+### ✔ Improved Stability
+
+- Table ranges compute correct header-row offset  
+- AutoFilter respects actual header row  
+- Eliminates Excel “Repaired Records” warnings  
+- Fully compliant with ECMA-376 schema
 
 ---
 
-# 🚀 Quick Start
-
-## In-Memory Workbook
+## 📄 Example (In-Memory)
 
 ```csharp
 var bytes = new WorkbookBuilder()
-    .AddSheet("Employees", s =>
+    .AddSheet("Demo", s =>
     {
+        s.AddEmptyRows(2);
         s.AddRow("Id", "Name", "Active");
         s.AddRow(1, "Alex", true);
         s.AddRow(2, "Brian", false);
-        s.AddTable("EmployeesTable");
-        s.AutoFitColumns();
+        s.AddTable("Employees");
     })
     .Build();
 
-File.WriteAllBytes("Employees.xlsx", bytes);
+File.WriteAllBytes("demo.xlsx", bytes);
 ```
 
 ---
 
-## Streaming (100k–1M rows)
+## 📄 Example (Streaming)
 
 ```csharp
-var bytes = StreamingWorkbookBuilder.Build("Logs", w =>
+var bytes = StreamingWorkbookBuilder.Build("Demo", writer =>
 {
-    w.WriteRow("Id", "Message", "Created");
-
-    for (int i = 0; i < 500_000; i++)
-        w.WriteRow(i, $"Message {i}", DateTime.UtcNow);
+    writer.WriteEmptyRows(4);
+    writer.WriteRow("Id", "Name");
+    writer.WriteRow(1, "Alex");
 });
-
-File.WriteAllBytes("Logs.xlsx", bytes);
 ```
 
 ---
 
-# 🧪 Schema Validation Example
+## 📜 License
 
-```csharp
-using var ms = new MemoryStream(bytes);
-using var doc = SpreadsheetDocument.Open(ms, false);
-
-var validator = new OpenXmlValidator();
-var errors = validator.Validate(doc).ToList();
-
-Assert.True(errors.Count == 0);
-```
-
----
-
-# 🔒 Header & Table Guarantees
-
-OpenExcelLite ensures:
-
-- Header row always present  
-- No null/empty header names  
-- Duplicate headers auto-renamed  
-- Table columns follow header names  
-- Table IDs unique  
-- Table names sanitized  
-- TableParts.Count correct  
-
----
-
-# 🏎 Performance Benchmarks
-
-| Rows | Mode | Memory | Time |
-|------|------|--------|------|
-| 5,000 | In-Memory | ~40MB | ~60ms |
-| 100,000 | Streaming | <5MB | ~0.5s |
-| 500,000 | Streaming | <5MB | ~2.2s |
-| 1,000,000 | Streaming | <6MB | ~4.8s |
-
-System: .NET 8, Ryzen 7, SSD
-
----
-
-# 📁 Project Structure
-
-```
-OpenExcelLite
-├── Builders/
-│   ├── WorkbookBuilder
-│   ├── WorksheetBuilder
-│   ├── TableBuilder
-│   ├── StreamingWorksheetWriter
-│   └── StreamingWorkbookBuilder
-├── Internals/
-│   ├── StyleFactory
-│   └── ColumnWidthHelper
-└── Tests, Examples, README
-```
-
----
-
-# 🤝 Contributing
-
-1. Fork repo  
-2. Create a feature branch  
-3. Add code + tests  
-4. Validate with OpenXmlValidator  
-5. Submit PR  
-
----
-
-# 📄 License
-
-MIT License
-
----
-
-# 📥 Download
-
-After uploading your release to GitHub, use:
-
-```
-https://github.com/livedcode/OpenExcelLite/releases/latest
-```
-
----
+MIT License (included in package)

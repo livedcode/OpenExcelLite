@@ -25,12 +25,14 @@ public sealed class TableBuilder
 
     internal void Build(WorksheetPart wsPart, int columnCount, int rowCount)
     {
-        // --- Extract header row from worksheet ---
-        var firstRow = wsPart.Worksheet.Descendants<Row>().FirstOrDefault();
-        if (firstRow == null)
-            throw new InvalidOperationException("Cannot create table: worksheet has no rows.");
 
-        var headerCells = firstRow.Elements<Cell>().ToList();
+        var headerRow = wsPart.Worksheet.Descendants<Row>()
+            .FirstOrDefault(r => r.Elements<Cell>().Any());
+
+        if (headerRow == null)
+            throw new InvalidOperationException("Cannot create table: worksheet has no non-empty rows.");
+
+        var headerCells = headerRow.Elements<Cell>().ToList();
 
         if (headerCells.Count != columnCount)
             throw new InvalidOperationException(
@@ -41,17 +43,15 @@ public sealed class TableBuilder
             .ToList();
 
         if (headers.Any(string.IsNullOrWhiteSpace))
-            throw new InvalidOperationException("Header row contains empty column names, table cannot be created.");
+            throw new InvalidOperationException("Header row contains empty column names.");
 
-        // Unique table id within this sheet/workbook
         uint tableId = GetNextTableId(wsPart);
-
-        // Unique, sanitized table name
         string finalTableName = GetUniqueTableName(_requestedName, wsPart);
 
-        // Range for the table (header + all data rows)
         string lastCol = WorksheetBuilder.GetColumnName(columnCount);
-        string refRange = $"A1:{lastCol}{rowCount}";
+
+        uint headerRowIndex = headerRow.RowIndex ?? 1U;
+        string refRange = $"A{headerRowIndex}:{lastCol}{rowCount}";
 
         var tablePart = wsPart.AddNewPart<TableDefinitionPart>();
         string relId = wsPart.GetIdOfPart(tablePart);
@@ -62,8 +62,7 @@ public sealed class TableBuilder
             Name = finalTableName,
             DisplayName = finalTableName,
             Reference = refRange,
-            HeaderRowCount = 1U,
-            TotalsRowShown = false
+            HeaderRowCount = 1U
         };
 
         table.Append(new AutoFilter { Reference = refRange });
@@ -84,10 +83,7 @@ public sealed class TableBuilder
         table.Append(new TableStyleInfo
         {
             Name = _styleName,
-            ShowRowStripes = true,
-            ShowColumnStripes = false,
-            ShowFirstColumn = false,
-            ShowLastColumn = false
+            ShowRowStripes = true
         });
 
         tablePart.Table = table;
@@ -110,13 +106,11 @@ public sealed class TableBuilder
 
     private static uint GetNextTableId(WorksheetPart wsPart)
     {
-        // Count existing table definition parts and increment
         return (uint)(wsPart.TableDefinitionParts.Count() + 1);
     }
 
     private static string GetUniqueTableName(string name, WorksheetPart wsPart)
     {
-        // Excel table name rules: letters, numbers, underscores, no spaces
         string sanitized = Regex.Replace(name, @"[^A-Za-z0-9_]", "_");
 
         if (string.IsNullOrEmpty(sanitized))
@@ -134,9 +128,7 @@ public sealed class TableBuilder
         int counter = 1;
 
         while (existingNames.Contains(finalName))
-        {
             finalName = $"{sanitized}_{counter++}";
-        }
 
         return finalName;
     }

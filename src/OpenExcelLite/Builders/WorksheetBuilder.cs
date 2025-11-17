@@ -12,6 +12,12 @@ namespace OpenExcelLite.Builders;
 public sealed class WorksheetBuilder
 {
     private readonly List<List<object?>> _sheetRows = new();
+
+
+    private bool _hasHeaderRow;
+    private int _headerColumnCount;
+    private uint _headerRowIndex;
+
     private bool _enableSheetFilter;
     private bool _enableAutoFit;
     private TableBuilder? _sheetTableBuilder;
@@ -23,48 +29,70 @@ public sealed class WorksheetBuilder
         SheetName = sheetName;
     }
 
+    public WorksheetBuilder AddEmptyRows(int count)
+    {
+        if (count <= 0)
+            return this;
+
+        for (int i = 0; i < count; i++)
+            _sheetRows.Add(new List<object?>()); // true blank row
+
+        return this;
+    }
+
     public WorksheetBuilder AddRow(params object?[] values)
     {
         if (values == null || values.Length == 0)
-            throw new ArgumentException("Row must contain at least one value.", nameof(values));
+            throw new ArgumentException("Row must contain at least one value.");
 
-        // FIRST ROW = HEADER ROW
-        if (_sheetRows.Count == 0)
+        //first non-empty row becomes header
+        if (!_hasHeaderRow)
         {
-            var headerNames = values.Select(v => v?.ToString()?.Trim() ?? "").ToList();
-
-            // A. Must not contain empty header names
-            if (headerNames.Any(string.IsNullOrWhiteSpace))
-                throw new InvalidOperationException("Header row cannot contain empty or null column names.");
-
-            // B. Deduplicate header names (case-insensitive)
-            for (int i = 0; i < headerNames.Count; i++)
-            {
-                string baseName = headerNames[i];
-                int suffix = 1;
-
-                while (headerNames
-                    .Take(i)
-                    .Contains(headerNames[i], StringComparer.OrdinalIgnoreCase))
-                {
-                    headerNames[i] = $"{baseName}_{suffix++}";
-                }
-            }
-
-            // C. Assign back sanitized header names as strings
-            for (int i = 0; i < values.Length; i++)
-                values[i] = headerNames[i];
+            AddHeaderRow(values);
         }
         else
         {
-            // Data rows must match header width
-            if (values.Length != _sheetRows[0].Count)
-                throw new InvalidOperationException(
-                    $"Row has {values.Length} cells but header has {_sheetRows[0].Count}.");
+            AddDataRow(values);
         }
 
-        _sheetRows.Add(values.ToList());
         return this;
+    }
+
+    private void AddHeaderRow(object?[] values)
+    {
+        var headerNames = values.Select(v => v?.ToString()?.Trim() ?? "").ToList();
+
+        if (headerNames.Any(string.IsNullOrWhiteSpace))
+            throw new InvalidOperationException("Header row cannot contain empty or null column names.");
+
+        // ensure unique names
+        for (int i = 0; i < headerNames.Count; i++)
+        {
+            string baseName = headerNames[i];
+            int suffix = 1;
+
+            while (headerNames
+                .Take(i)
+                .Contains(headerNames[i], StringComparer.OrdinalIgnoreCase))
+            {
+                headerNames[i] = $"{baseName}_{suffix++}";
+            }
+        }
+
+        _sheetRows.Add(headerNames.Cast<object?>().ToList());
+
+        _hasHeaderRow = true;
+        _headerColumnCount = headerNames.Count;
+        _headerRowIndex = (uint)_sheetRows.Count;
+    }
+
+    private void AddDataRow(object?[] values)
+    {
+        if (values.Length != _headerColumnCount)
+            throw new InvalidOperationException(
+                $"Row has {values.Length} cells but header has {_headerColumnCount}.");
+
+        _sheetRows.Add(values.ToList());
     }
 
     public WorksheetBuilder ApplyAutoFilter()
@@ -89,8 +117,10 @@ public sealed class WorksheetBuilder
     {
         if (_sheetRows.Count == 0)
             throw new InvalidOperationException("Worksheet must have at least one row.");
+        if (!_hasHeaderRow)
+            throw new InvalidOperationException("Worksheet must have a header row.");
 
-        int columnCount = _sheetRows[0].Count;
+        int columnCount = _headerColumnCount;
         int rowCount = _sheetRows.Count;
 
         var worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
@@ -103,6 +133,16 @@ public sealed class WorksheetBuilder
         {
             var row = new Row { RowIndex = rowIndex };
 
+            bool isBlankRow = rowValues.Count == 0 || rowValues.All(v => v == null);
+
+            if (isBlankRow)
+            {
+                sheetData.Append(row);
+                rowIndex++;
+                continue;
+            }
+
+            // Normal row
             for (int c = 0; c < columnCount; c++)
             {
                 var value = rowValues[c];
@@ -119,9 +159,7 @@ public sealed class WorksheetBuilder
         var worksheet = new Worksheet();
 
         if (_enableAutoFit)
-        {
             worksheet.Append(widthHelper.BuildColumns());
-        }
 
         worksheet.Append(sheetData);
 
@@ -130,7 +168,7 @@ public sealed class WorksheetBuilder
             string lastCol = GetColumnName(columnCount);
             worksheet.Append(new AutoFilter
             {
-                Reference = $"A1:{lastCol}{rowCount}"
+                Reference = $"A{_headerRowIndex}:{lastCol}{rowCount}"
             });
         }
 
