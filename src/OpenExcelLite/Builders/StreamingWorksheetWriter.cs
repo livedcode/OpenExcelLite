@@ -1,17 +1,21 @@
 ﻿using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
+using OpenExcelLite.Models;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OpenExcelLite.Builders;
+
 /// <summary>
 /// Ultra-fast writer for huge Excel worksheets (100k–1M rows),
 /// streaming rows directly to XML using OpenXmlWriter.
+/// Fully supports:
+/// - Hyperlinks (external URLs)
+/// - Empty rows
+/// - Date styles
+/// - Header column consistency checking
 /// </summary>
 public sealed class StreamingWorksheetWriter : IDisposable
 {
@@ -23,13 +27,20 @@ public sealed class StreamingWorksheetWriter : IDisposable
     private int _headerColumnCount = 0;
     private bool _headerWritten = false;
 
+    // NEW: track hyperlinks so we can write <hyperlinks> after SheetData
+    private readonly List<(uint RowIndex, int ColIndex, HyperlinkCell Link)> _hyperlinks = new();
+
     public StreamingWorksheetWriter(WorksheetPart worksheetPart, uint dateStyleIndex)
     {
-        _worksheetPart = worksheetPart;
-        _writer = OpenXmlWriter.Create(worksheetPart);
+        _worksheetPart = worksheetPart ?? throw new ArgumentNullException(nameof(worksheetPart));
         _dateStyleIndex = dateStyleIndex;
 
+        _writer = OpenXmlWriter.Create(worksheetPart);
+
+        // <worksheet>
         _writer.WriteStartElement(new Worksheet());
+
+        // <sheetData>
         _writer.WriteStartElement(new SheetData());
     }
 
@@ -57,17 +68,16 @@ public sealed class StreamingWorksheetWriter : IDisposable
         if (values == null || values.Length == 0)
             throw new ArgumentException("Row must contain at least one value.");
 
-        // header row logic
+        // Header validation
         if (!_headerWritten)
         {
             _headerColumnCount = values.Length;
             _headerWritten = true;
         }
-        else
+        else if (values.Length != _headerColumnCount)
         {
-            if (values.Length != _headerColumnCount)
-                throw new InvalidOperationException(
-                    $"Data row has {values.Length} cells but header has {_headerColumnCount}.");
+            throw new InvalidOperationException(
+                $"Data row has {values.Length} cells but header has {_headerColumnCount}.");
         }
 
         _writer.WriteStartElement(new Row { RowIndex = _currentRowIndex });
@@ -82,12 +92,15 @@ public sealed class StreamingWorksheetWriter : IDisposable
     }
 
     // ============================================================
-    // WriteCell helper
+    // WriteCell()
     // ============================================================
     private void WriteCell(object? value, int columnIndex, uint rowIndex)
     {
         string cellRef = GetColumnName(columnIndex) + rowIndex;
 
+        // --------------------------
+        // Handle null
+        // --------------------------
         if (value == null)
         {
             _writer.WriteElement(new Cell
@@ -99,6 +112,27 @@ public sealed class StreamingWorksheetWriter : IDisposable
             return;
         }
 
+        // --------------------------
+        // NEW: Hyperlink cell
+        // --------------------------
+        if (value is HyperlinkCell link)
+        {
+            // Write display text cell
+            _writer.WriteElement(new Cell
+            {
+                CellReference = cellRef,
+                DataType = CellValues.String,
+                CellValue = new CellValue(link.Display)
+            });
+
+            // Record hyperlink for later <hyperlinks> output
+            _hyperlinks.Add((rowIndex, columnIndex, link));
+            return;
+        }
+
+        // --------------------------
+        // Normal primitive types
+        // --------------------------
         switch (value)
         {
             case string s:
@@ -148,6 +182,9 @@ public sealed class StreamingWorksheetWriter : IDisposable
         }
     }
 
+    // ============================================================
+    // Helpers
+    // ============================================================
     private static string GetColumnName(int index)
     {
         string name = "";
@@ -160,10 +197,45 @@ public sealed class StreamingWorksheetWriter : IDisposable
         return name;
     }
 
+    // ============================================================
+    // Dispose()
+    // ============================================================
     public void Dispose()
     {
-        _writer.WriteEndElement(); // </SheetData>
-        _writer.WriteEndElement(); // </Worksheet>
+        // Close <sheetData>
+        _writer.WriteEndElement();
+
+        // ========================================================
+        // Write <hyperlinks> AFTER SheetData but BEFORE Worksheet ends
+        // ========================================================
+        if (_hyperlinks.Count > 0)
+        {
+            _writer.WriteStartElement(new Hyperlinks());
+
+            foreach (var (rowIndex, colIndex, link) in _hyperlinks)
+            {
+                string cellRef = GetColumnName(colIndex) + rowIndex;
+
+                // Relationship created here
+                string relId = _worksheetPart.AddHyperlinkRelationship(
+                    new Uri(link.Url, UriKind.Absolute),
+                    true
+                ).Id;
+
+                _writer.WriteElement(new Hyperlink
+                {
+                    Reference = cellRef,
+                    Id = relId,
+                    Display = link.Display
+                });
+            }
+
+            _writer.WriteEndElement(); // </hyperlinks>
+        }
+
+        // Close </worksheet>
+        _writer.WriteEndElement();
+
         _writer.Dispose();
     }
 }

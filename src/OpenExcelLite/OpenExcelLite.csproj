@@ -1,45 +1,69 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net8.0</TargetFramework>
+		<!-- Multi-target: .NET 8, .NET 9, .NET 10 -->
+		<TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+		<EnablePreviewFeatures>true</EnablePreviewFeatures>
+
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 
 		<!-- NuGet Packaging -->
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageId>OpenExcelLite</PackageId>
-		<Version>1.1.0</Version>
+		<Version>1.2.0</Version>
 		<Authors>livedcode</Authors>
-		<Company>livedcode</Company>
 		<Product>OpenExcelLite</Product>
-		<PackageDescription>
-			A lightweight Excel (XLSX) builder using the official OpenXML SDK, supporting
-			streaming, tables, header enforcement, autofit, and schema-compliant output.
-			No ClosedXML or EPPlus dependencies. Extremely fast and memory efficient.
-		</PackageDescription>
+
+		<!-- NEW: Updated Description -->
 		<Description>
-			OpenExcelLite: a minimal, schema-safe OpenXML Excel generator with support
-			for streaming large datasets (100k–1M rows), auto header validation,
-			table creation, autofit columns, and strict ECMA-376 output.
-			Designed for high-performance exports using .NET 8.
+			OpenExcelLite is a lightweight, schema-safe Excel (XLSX) generator using the official OpenXML SDK.
+			Supports in-memory and streaming writers, tables, AutoFilter, AutoFit, true blank rows,
+			and NEW hyperlink support — all fully ECMA-376 compliant and extremely fast.
 		</Description>
-		<PackageTags>openxml excel xlsx streaming table builder export fast lightweight</PackageTags>
+
+		<PackageDescription>
+			OpenExcelLite: Minimal, dependency-free Excel generator.
+			Features include streaming (100k–1M+ rows), hyperlink support, tables, AutoFilter, autofit columns,
+			correct date formatting, empty row handling, and fully schema-valid OpenXML output.
+			No ClosedXML. No EPPlus. No interop. Production-grade performance.
+		</PackageDescription>
+
+		<!-- NEW: SEO-Optimized Package Tags -->
+		<PackageTags>
+			excel; xlsx; excel-export; excel-generator; openxml; openxml-sdk;
+			spreadsheet; spreadsheet-export; spreadsheet-generation;
+			csharp; dotnet; dotnet-library; streaming; large-datasets;
+			memory-efficient; data-export; table; table-styles; autofit;
+			autofilter; office-openxml; excel-writer; hyperlink
+		</PackageTags>
+
 		<PackageProjectUrl>https://github.com/livedcode/OpenExcelLite</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/livedcode/OpenExcelLite</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<RepositoryType>git</RepositoryType>
+
+		<!-- UPDATED Release Notes for v1.2.0 -->
 		<PackageReleaseNotes>
-			v1.1.0:
+			v1.2.0 — Hyperlink Support:
+			- NEW: In-memory hyperlink support (XL.Hyper)
+			- NEW: Streaming hyperlink support
+			- NEW: Full OpenXML hyperlink relationships
+			- NEW: Updated examples and documentation
+			- FIXED: Schema validation improvements
+
+			v1.1.0 — Blank Row Support:
 			- Added AddEmptyRows(int)
 			- Added WriteEmptyRows(int)
 			- Improved header detection
-			- Fixed table and AutoFilter ranges
+			- Fixed AutoFilter/table ranges
 			- Removed Excel repair warnings
 		</PackageReleaseNotes>
-		<!-- Include README.md automatically -->
-		<IncludeContentInPack>true</IncludeContentInPack>
 
+		<!-- Ensure README is included -->
+		<IncludeContentInPack>true</IncludeContentInPack>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -47,9 +71,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<!-- Include README.md in NuGet package -->
+		<!-- Ship documentation -->
 		<None Include="README.md" Pack="true" PackagePath="" />
 		<None Include="CHANGELOG.md" Pack="true" PackagePath="" />
 		<None Include="LICENSE" Pack="true" PackagePath="" />
 	</ItemGroup>
+
 </Project>
