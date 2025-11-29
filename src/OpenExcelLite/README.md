@@ -4,23 +4,41 @@
 [![NuGet Downloads](https://img.shields.io/nuget/dt/OpenExcelLite.svg?color=blue)](https://www.nuget.org/packages/OpenExcelLite)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
 
-A lightweight, schema-safe Excel (XLSX) generator for .NET using the official OpenXML SDK.  
-Supports both in-memory and streaming Excel creation — designed for fast, dependency-free exports.
+OpenExcelLite is a lightweight, schema-safe Excel (XLSX) generator for .NET using the official OpenXML SDK.  
+Supports **in-memory**, **streaming**, **multi-sheet**, **hyperlinks**, and **empty row** generation — with zero dependencies.
 
 ---
 
-## ✨ Features
+# ✨ Features
 
 - In-memory Excel builder  
-- Streaming XLSX writer for large datasets (100k–1M rows)  
-- Table creation with styling  
-- AutoFilter support  
-- AutoFit column widths (approx algorithm)  
-- Date formatting (OADate + style index)  
-- Automatic header validation and deduplication  
-- Boolean, numeric, string inference  
-- Blank row support (in-memory + streaming)  
-- **NEW in v1.2.0 — Hyperlink support (in-memory + streaming)**  
+- Streaming writer for 100k–1M+ rows  
+- Multi-sheet (in-memory + streaming)  
+- Hyperlinks (in-memory + streaming)  
+- Blank row support  
+- AutoFilter & table creation  
+- AutoFit columns (approx)  
+- Header validation & range correction  
+- Fast, dependency-free, ECMA-376 valid  
+
+---
+
+# 🚀 New in v1.3.0  
+### Multi-sheet streaming + hybrid mode
+
+```csharp
+var bytes = StreamingWorkbookBuilder.Build(wb =>
+{
+    wb.AddSheet("Users", s => {
+        s.WriteRow("Id", "Name");
+        s.WriteRow(1, "Alex");
+    });
+
+    wb.AddSheet("Logs", s => {
+        s.WriteRow("Timestamp", "Message");
+        s.WriteRow(DateTime.Now, "Started");
+    });
+});
 
 ---
 
