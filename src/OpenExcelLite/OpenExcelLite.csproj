@@ -11,15 +11,15 @@
 		<!-- NuGet Packaging -->
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageId>OpenExcelLite</PackageId>
-		<Version>1.2.0</Version>
+		<Version>1.3.0</Version>
 		<Authors>livedcode</Authors>
 		<Product>OpenExcelLite</Product>
 
-		<!-- NEW: Updated Description -->
 		<Description>
-			OpenExcelLite is a lightweight, schema-safe Excel (XLSX) generator using the official OpenXML SDK.
-			Supports in-memory and streaming writers, tables, AutoFilter, AutoFit, true blank rows,
-			and NEW hyperlink support — all fully ECMA-376 compliant and extremely fast.
+			OpenExcelLite is a lightweight, schema-safe Excel (XLSX) generator for .NET.
+			Supports in-memory and streaming modes, tables, autofilter, autofit, hyperlinks,
+			blank rows, and now in v1.3.0: multi-sheet streaming support and hybrid
+			workbook generation. Fully compatible with .NET 8, 9, and 10.
 		</Description>
 
 		<PackageDescription>
@@ -29,13 +29,12 @@
 			No ClosedXML. No EPPlus. No interop. Production-grade performance.
 		</PackageDescription>
 
-		<!-- NEW: SEO-Optimized Package Tags -->
 		<PackageTags>
 			excel; xlsx; excel-export; excel-generator; openxml; openxml-sdk;
 			spreadsheet; spreadsheet-export; spreadsheet-generation;
-			csharp; dotnet; dotnet-library; streaming; large-datasets;
-			memory-efficient; data-export; table; table-styles; autofit;
-			autofilter; office-openxml; excel-writer; hyperlink
+			csharp; dotnet; dotnet-library; streaming; multi-sheet; hybrid;
+			large-datasets; hyperlinked; memory-efficient; data-export; table;
+			table-styles; autofit; autofilter; office-openxml;
 		</PackageTags>
 
 		<PackageProjectUrl>https://github.com/livedcode/OpenExcelLite</PackageProjectUrl>
@@ -45,21 +44,14 @@
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 
-		<!-- UPDATED Release Notes for v1.2.0 -->
 		<PackageReleaseNotes>
-			v1.2.0 — Hyperlink Support:
-			- NEW: In-memory hyperlink support (XL.Hyper)
-			- NEW: Streaming hyperlink support
-			- NEW: Full OpenXML hyperlink relationships
-			- NEW: Updated examples and documentation
-			- FIXED: Schema validation improvements
-
-			v1.1.0 — Blank Row Support:
-			- Added AddEmptyRows(int)
-			- Added WriteEmptyRows(int)
-			- Improved header detection
-			- Fixed AutoFilter/table ranges
-			- Removed Excel repair warnings
+			v1.3.0:
+			- Added multi-sheet streaming support
+			- Added mixing streaming + in-memory sheets (hybrid mode)
+			- Added demos for multi-sheet in-memory + hyperlinks
+			- Added demo for 10-sheet export
+			- Fixed streaming hyperlinks in multi-sheet mode
+			- Updated README And CHANGELOG
 		</PackageReleaseNotes>
 
 		<!-- Ensure README is included -->

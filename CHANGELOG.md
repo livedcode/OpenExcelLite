@@ -6,10 +6,24 @@ and adheres to **[Semantic Versioning](https://semver.org/spec/v2.0.0.html)**.
 
 ---
 
-## [Unreleased]
+## [1.3.0] - 2025-11-29
 ### Added
-- (placeholder for future improvements)
+- **Multi-sheet streaming support**: `wb.AddSheet("SheetName", writer => {...})`
+- **Hybrid mode**: Combine streaming + in-memory sheets in the same workbook.
+- **Multi-sheet in-memory demos** (hyperlinks, empty rows)
+- **Demo exporting 10 sheets at once**
+- Fully schema-valid across multiple sheets, hyperlinks, and empty rows
 
+### Improved
+- Streaming hyperlink handling across multiple WorksheetParts
+- Internal writer disposal to avoid orphan relationships
+- Updated README with multi-sheet examples
+- Updated Program.cs with full extended demos
+
+### Fixed
+- Streaming worksheets now flush and complete correctly when multiple sheets exist
+- Hyperlinks across multiple sheets no longer produce invalid OpenXML nodes
+- 
 ---
 
 ## [1.2.0] - 2025-11-23
